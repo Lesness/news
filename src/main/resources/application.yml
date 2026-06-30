@@ -1,0 +1,19 @@
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update # Для локальной разработки приемлемо
+    show-sql: false # Отключаем в проде, чтобы не засорять логи
+    open-in-view: false # Отключаем, чтобы сессии БД не держались во время рендеринга и убрать WARN в логах
+
+server:
+  port: 8080
+  server-header: "Server" # Защита: маскирует версию встроенного Tomcat (вместо Apache-Coyote/1.1)
+  tomcat:
+    server-header: "Server"
+  error:
+    include-stacktrace: never # Защита от утечки данных в ошибках
+    include-message: always

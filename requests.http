@@ -1,0 +1,60 @@
+### Переменные окружения для тестирования локально
+@host = http://localhost:8080
+@contentType = application/json
+
+### 1. CREATE - Создание первой новости (Успешный сценарий)
+POST {{host}}/api/news
+Content-Type: {{contentType}}
+
+{
+  "title": "Безопасный CRUD на Spring Boot",
+  "content": "Студент Bitlab Academy успешно реализовал первый спринт с учётом стандартов безопасности OWASP.",
+  "publishDate": "2026-07-01",
+  "author": "Bexultan"
+}
+
+### 2. CREATE - Валидация входных данных (Тест на ошибку 400 Bad Request)
+# Заголовок слишком короткий, контент пустой, дата в будущем
+POST {{host}}/api/news
+Content-Type: {{contentType}}
+
+{
+  "title": "IT",
+  "content": "",
+  "publishDate": "2029-12-31",
+  "author": ""
+}
+
+### 3. READ - Получение списка всех новостей
+GET {{host}}/api/news
+Accept: {{contentType}}
+
+### 4. READ - Получение одной новости по ID (Успешный сценарий)
+# Замени ID на тот, который сгенерирует твоя БД (например, 1)
+GET {{host}}/api/news/1
+Accept: {{contentType}}
+
+### 5. READ - Получение новости по несуществующему ID (Тест на ошибку 404 Not Found)
+# Проверяем, что GlobalExceptionHandler вернет аккуратный 404 вместо стектрейса
+GET {{host}}/api/news/9999
+Accept: {{contentType}}
+
+### 6. UPDATE - Полное обновление новости по ID (Успешный сценарий)
+# Изменяем поля новости с ID 1
+PUT {{host}}/api/news/1
+Content-Type: {{contentType}}
+
+{
+  "title": "Обновленный гайд по OWASP",
+  "content": "Внесены изменения в конфигурацию безопасности, скрыты заголовки сервера Tomcat.",
+  "publishDate": "2026-07-01",
+  "author": "Bexultan (Lead Dev)"
+}
+
+### 7. DELETE - Удаление новости по ID
+# После удаления этот запрос вернет 204 No Content
+DELETE {{host}}/api/news/1
+
+### 8. DELETE - Повторное удаление (Тест на ошибку 404 Not Found)
+# Проверяем защиту слоя Service: удаление несуществующей записи
+DELETE {{host}}/api/news/1
