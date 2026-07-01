@@ -29,11 +29,12 @@ DB_USERNAME=postgres
 DB_PASSWORD=ваш_реальный_пароль_от_postgres
 
 3:
-<img width="1186" height="668" alt="Снимок экрана 2026-07-01 044323" src="https://github.com/user-attachments/assets/b824f11c-9066-40c6-91b2-df3b5451df35" />
-<img width="1186" height="538" alt="Снимок экрана 2026-07-01 044230" src="https://github.com/user-attachments/assets/c7ca5e5c-ce1b-49e9-8f09-0c8f0a2e3593" />
-<img width="1183" height="615" alt="Снимок экрана 2026-07-01 043250" src="https://github.com/user-attachments/assets/e543adb3-3e14-465e-8c36-80675ada8476" />
-<img width="1185" height="449" alt="Снимок экрана 2026-07-01 043116" src="https://github.com/user-attachments/assets/0df2470e-7cdb-4d59-bb6b-48e00f1f9a42" />
-<img width="957" height="194" alt="image" src="https://github.com/user-attachments/assets/1e2df13d-c8f9-4a95-966c-1f2d28165ba0" />
+<img width="1072" height="85" alt="Снимок экрана 2026-05-03 160221" src="https://github.com/user-attachments/assets/414f2c8b-b08b-4df6-b779-f860db4c464a" />
+<img width="749" height="459" alt="Снимок экрана 2026-05-24 160320" src="https://github.com/user-attachments/assets/bbd5a1b0-392a-4456-be9f-9dfdff9c9e15" />
+<img width="856" height="897" alt="Снимок экрана 2026-05-25 050757" src="https://github.com/user-attachments/assets/d164c4ee-f716-4686-9db4-b10045e0c482" />
+<img width="1185" height="449" alt="Снимок экрана 2026-07-01 043116" src="https://github.com/user-attachments/assets/393ed088-79e9-45e1-a593-970f3f024ad1" />
+<img width="957" height="194" alt="Снимок экрана 2026-07-01 050130" src="https://github.com/user-attachments/assets/7ca2bfda-480d-4ee4-a9a5-e844724897ad" />
+
 
 4:
 Реализованные меры безопасности (Secure Design)
