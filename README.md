@@ -34,7 +34,6 @@ DB_PASSWORD=ваш_реальный_пароль_от_postgres
 <img width="1183" height="615" alt="Снимок экрана 2026-07-01 043250" src="https://github.com/user-attachments/assets/a27255e8-2319-492d-af72-9449d454a4e8" />
 <img width="1186" height="538" alt="Снимок экрана 2026-07-01 044230" src="https://github.com/user-attachments/assets/86f7c956-f977-4180-b982-7408250f58cc" />
 <img width="1186" height="668" alt="Снимок экрана 2026-07-01 044323" src="https://github.com/user-attachments/assets/9a7ccb0c-0974-411a-bf60-4e065766a81c" />
-<img width="957" height="194" alt="Снимок экрана 2026-07-01 050130" src="https://github.com/user-attachments/assets/ae47b5e6-54c5-4003-b644-2ea652e85874" />
 <img width="1189" height="594" alt="image" src="https://github.com/user-attachments/assets/cb74bd91-c9cd-4d54-847f-01deaa876b0d" />
 <img width="1186" height="641" alt="image" src="https://github.com/user-attachments/assets/b90e9b96-0d05-4021-8616-8f7e160dbea2" />
 <img width="1188" height="643" alt="image" src="https://github.com/user-attachments/assets/94cb1ea9-8af3-41aa-9de6-37d8570174cc" />
