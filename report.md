@@ -6,6 +6,8 @@
 
 <img width="1191" height="636" alt="Снимок экрана 2026-07-02 170110" src="https://github.com/user-attachments/assets/116df794-2a4d-498b-bb8d-945258b6a9dc" />
 
-<img width="1523" height="708" alt="image" src="https://github.com/user-attachments/assets/7b0486c4-6645-4d0b-a284-987f527095ae" />
+<img width="1525" height="717" alt="image" src="https://github.com/user-attachments/assets/9186922f-f09f-4341-965e-aac02d1b3cbe" />
 
-<img width="1193" height="639" alt="image" src="https://github.com/user-attachments/assets/d7723bfe-2ac8-4097-b60e-a556238f3064" />
+
+<img width="1190" height="682" alt="image" src="https://github.com/user-attachments/assets/e9f59931-5bd3-45aa-8199-48a4e04ce8ce" />
+
