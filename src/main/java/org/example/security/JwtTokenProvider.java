@@ -15,8 +15,24 @@ import java.util.stream.Collectors;
 public class JwtTokenProvider {
 
     // Секрет берется из окружения (.env)
+    // Секрет берется строго из окружения. Если его там нет — приложение выдаст ошибку.
+    // Метод .trim() гарантирует очистку от случайных пробелов и переносов строк из .env файла
+    // Читаем из System.getProperty, куда Dotenv бережно сложил данные из файла .env
     private final String jwtSecret = System.getProperty("JWT_SECRET") != null ?
-            System.getProperty("JWT_SECRET") : "DefaultSuperSecretKeyForBitlabAcademy2026SecureSprint2!!!";
+            System.getProperty("JWT_SECRET").trim() : null;
+
+    {
+        if (jwtSecret == null || jwtSecret.isEmpty()) {
+            throw new IllegalStateException("КРИТИЧЕСКАЯ ОШИБКА: Секрет JWT_SECRET не найден в конфигурации!");
+        }
+    }
+
+    // Добавим проверку прямо в конструктор или блок инициализации
+    {
+        if (jwtSecret == null || jwtSecret.trim().isEmpty()) {
+            throw new IllegalStateException("КРИТИЧЕСКАЯ ОШИБКА: Переменная окружения JWT_SECRET не задана в файле .env!");
+        }
+    }
 
     private final long accessTokenValidityInMs = 15 * 60 * 1000; // 15 минут
     private final long refreshTokenValidityInMs = 7L * 24 * 60 * 60 * 1000; // 7 дней

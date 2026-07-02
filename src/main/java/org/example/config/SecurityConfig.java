@@ -1,5 +1,6 @@
 package org.example.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.example.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
@@ -34,10 +35,20 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**").permitAll()
+                        // Разрешаем авторизацию и системные страницы ошибок без токена
+                        .requestMatchers("/auth/**", "/error").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/news/**").hasAnyRole("STUDENT", "ADMIN")
                         .requestMatchers("/api/news/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
+                )
+                // ДОБАВЬ ЭТОТ БЛОК:
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json");
+                            response.setCharacterEncoding("UTF-8"); // <- ДОБАВЬ ЭТУ СТРОКУ
+                            response.getWriter().write("{\"error\": \"Unauthorized: Требуется валидная авторизация\"}");
+                        })
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
