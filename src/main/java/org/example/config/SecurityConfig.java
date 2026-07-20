@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -19,6 +20,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity // Включаем поддержку @PreAuthorize
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -35,18 +37,20 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Разрешаем авторизацию и системные страницы ошибок без токена
-                        .requestMatchers("/auth/**", "/error").permitAll()
+                        // Публичные эндпоинты авторизации
+                        .requestMatchers("/auth/login", "/auth/register", "/auth/refresh", "/auth/logout", "/error").permitAll()
+                        // Защищенный эндпоинт получения текущего профиля
+                        .requestMatchers("/auth/me").authenticated()
+                        // Работа с новостями
                         .requestMatchers(HttpMethod.GET, "/api/news/**").hasAnyRole("STUDENT", "ADMIN")
-                        .requestMatchers("/api/news/**").hasRole("ADMIN")
+                        // Все остальные запросы должны быть авторизованы
                         .anyRequest().authenticated()
                 )
-                // ДОБАВЬ ЭТОТ БЛОК:
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             response.setContentType("application/json");
-                            response.setCharacterEncoding("UTF-8"); // <- ДОБАВЬ ЭТУ СТРОКУ
+                            response.setCharacterEncoding("UTF-8");
                             response.getWriter().write("{\"error\": \"Unauthorized: Требуется валидная авторизация\"}");
                         })
                 )

@@ -1,16 +1,26 @@
 package org.example.controller;
 
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.dto.AuthRequest;
 import org.example.dto.AuthResponse;
 import org.example.dto.RegisterRequest;
+import org.example.dto.UserResponse;
 import org.example.service.AuthService;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -22,10 +32,8 @@ public class AuthController {
 
     private final AuthService authService;
 
-    // In-Memory хранилище для демонстрации защиты от Brute-force (простой Rate Limiter)
     private final Map<String, Long> bruteForceCache = new ConcurrentHashMap<>();
-    private static final int MAX_ATTEMPTS = 5;
-    private static final long LOCK_TIME_MS = 60000; // 1 минута блокировки
+    private static final long LOCK_TIME_MS = 60000;
 
     @PostMapping("/register")
     public ResponseEntity<Map<String, String>> register(@Valid @RequestBody RegisterRequest request) {
@@ -34,11 +42,10 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody AuthRequest request, HttpServletRequest httpRequest) {
+    public ResponseEntity<?> login(@Valid @RequestBody AuthRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
         String ip = httpRequest.getRemoteAddr();
         long now = System.currentTimeMillis();
 
-        // Проверяем, не заблокирован ли IP-адрес клиента (Защита кибербеза от Hydra / Burp Suite)
         if (bruteForceCache.containsKey(ip) && bruteForceCache.get(ip) > now) {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
                     .body(Map.of("error", "Слишком много попыток входа. Доступ заблокирован на 1 минуту."));
@@ -46,24 +53,74 @@ public class AuthController {
 
         try {
             AuthResponse response = authService.login(request);
-            bruteForceCache.remove(ip); // Сбрасываем счетчик при успешном входе
-            return ResponseEntity.ok(response);
+            bruteForceCache.remove(ip);
+
+            // Устанавливаем refreshToken в httpOnly Cookie
+            setRefreshTokenCookie(httpResponse, response.getRefreshToken(), 7 * 24 * 60 * 60);
+
+            // В теле ответа отдаем только accessToken
+            return ResponseEntity.ok(Map.of("accessToken", response.getAccessToken()));
         } catch (Exception e) {
-            // Если пароль неверный, увеличиваем штрафное время для этого IP
             bruteForceCache.put(ip, System.currentTimeMillis() + LOCK_TIME_MS);
-            throw e; // Прокидываем исключение дальше в ExceptionHandler
+            throw e;
         }
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<AuthResponse> refresh(@RequestParam String refreshToken) {
-        AuthResponse response = authService.refresh(refreshToken);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<?> refresh(HttpServletRequest request, HttpServletResponse response) {
+        String refreshToken = extractRefreshTokenFromCookie(request);
+        if (refreshToken == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Refresh cookie отсутствует"));
+        }
+
+        AuthResponse authResponse = authService.refresh(refreshToken);
+        setRefreshTokenCookie(response, authResponse.getRefreshToken(), 7 * 24 * 60 * 60);
+
+        return ResponseEntity.ok(Map.of("accessToken", authResponse.getAccessToken()));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Map<String, String>> logout(@RequestParam String refreshToken) {
-        authService.logout(refreshToken);
-        return ResponseEntity.ok(Map.of("message", "Вы успешно вышли из системы. Токен инвалидирован."));
+    public ResponseEntity<Map<String, String>> logout(HttpServletRequest request, HttpServletResponse response) {
+        String refreshToken = extractRefreshTokenFromCookie(request);
+        if (refreshToken != null) {
+            authService.logout(refreshToken);
+        }
+        // Очищаем куку
+        setRefreshTokenCookie(response, "", 0);
+        return ResponseEntity.ok(Map.of("message", "Вы успешно вышли из системы."));
+    }
+
+    // ТЗ: GET /api/users/me — профиль текущего пользователя
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        List<String> roles = userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList();
+
+        return ResponseEntity.ok(new UserResponse(userDetails.getUsername(), roles));
+    }
+
+    private void setRefreshTokenCookie(HttpServletResponse response, String value, long maxAge) {
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", value)
+                .httpOnly(true)
+                .secure(false) // Поставить true в продакшене (с HTTPS)
+                .path("/auth")
+                .maxAge(maxAge)
+                .sameSite("Lax")
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
+
+    private String extractRefreshTokenFromCookie(HttpServletRequest request) {
+        if (request.getCookies() == null) return null;
+        return Arrays.stream(request.getCookies())
+                .filter(c -> "refreshToken".equals(c.getName()))
+                .map(Cookie::getValue)
+                .findFirst()
+                .orElse(null);
     }
 }

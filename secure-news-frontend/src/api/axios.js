@@ -1,60 +1,48 @@
 import axios from 'axios';
 
-// Базовый инстанс axios с URL из .env
+let refreshHandler = null;
+let logoutHandler = null;
+
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-    withCredentials: true, // Обязательно для передачи httpOnly cookies
+    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080',
+    withCredentials: true, // Передача httpOnly Cookie на бэкенд
 });
 
-// Ссылка на функции из AuthContext, которые мы внедрим позже,
-// чтобы избежать циклической зависимости при импорте контекста
-let logoutHandler = null;
-let refreshTokensHandler = null;
-let getAccessTokenFn = () => null;
+export const injectAuthHandlers = (refresh, logout, getAccessToken) => {
+    refreshHandler = refresh;
+    logoutHandler = logout;
 
-export const injectAuthHandlers = (getRefreshedToken, doLogout, getAccessToken) => {
-    refreshTokensHandler = getRefreshedToken;
-    logoutHandler = doLogout;
-    getAccessTokenFn = getAccessToken;
-};
-
-// Request Interceptor: Добавляет Access Token ко всем защищенным запросам
-api.interceptors.request.use(
-    (config) => {
-        const token = getAccessTokenFn();
-        // Если токен есть в памяти, добавляем заголовок Authorization
+    // Автоматическая подстановка Bearer токена в каждый запрос
+    api.interceptors.request.use((config) => {
+        const token = getAccessToken();
         if (token) {
-            config.headers['Authorization'] = `Bearer ${token}`;
+            config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
-    },
-    (error) => Promise.reject(error)
-);
+    });
+};
 
-// Response Interceptor: Перехватывает 401 ошибку и обновляет токен через /auth/refresh
+// Перехватчик ответов (Response Interceptor)
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
 
-        // Если сервер вернул 401 и это не повторный запрос к той же точке
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // Если 401 на эндпоинтах авторизации — НЕ зацикливаем, отдаем ошибку
+        if (
+            error.response?.status === 401 &&
+            !originalRequest._retry &&
+            !originalRequest.url.includes('/auth/refresh') &&
+            !originalRequest.url.includes('/auth/login')
+        ) {
             originalRequest._retry = true;
-
             try {
-                if (refreshTokensHandler) {
-                    // Вызываем функцию обновления токена (она получит новый accessToken)
-                    const newAccessToken = await refreshTokensHandler();
-
-                    // Обновляем заголовок в упавшем запросе и повторяем его
-                    originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+                if (refreshHandler) {
+                    const newToken = await refreshHandler();
+                    originalRequest.headers.Authorization = `Bearer ${newToken}`;
                     return api(originalRequest);
                 }
             } catch (refreshError) {
-                // Если рефреш-токен тоже протух или отозван — разлогиниваем пользователя
                 if (logoutHandler) logoutHandler();
                 return Promise.reject(refreshError);
             }
